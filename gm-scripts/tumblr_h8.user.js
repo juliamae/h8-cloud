@@ -9,6 +9,9 @@
 // @license        (CC) Attribution-Share Alike 3.0 United States; http://creativecommons.org/licenses/by-sa/3.0/us/
 // ==/UserScript==
 
+// Change this value to false if you do not want the posts you h8 to (anonymously) go to h8cloud.com
+var sendH8 = true;
+
 var h8ed	= GM_getValue("h8ed", "").split(",");
 if (h8ed == "") h8ed = [];
 
@@ -63,7 +66,8 @@ function addH8Links(){
 
 function hideAllH8ed(){
 	for( var i=0; i <= h8ed.length; i++ ) {
-		hide( h8ed[i] );
+		var post = document.getElementById("post" + h8ed[i]);
+		if (post) hide( post );
 	}
 }
 
@@ -89,10 +93,9 @@ function hideAllH8Reblogs(){
 	}
 }
 
-function hide( id ) {
-	post = document.getElementById("post" + id);
-	
-	if (post) {
+
+function hide( post ) {
+
 		post.style.display = 'none';
 
 		var hidden_notice = document.createElement('li');
@@ -100,7 +103,6 @@ function hide( id ) {
 		hidden_notice.innerHTML = 'You h8ed this post. <a onclick="this.parentNode.style.display=\'none\'; this.parentNode.previousSibling.style.display=\'\'; return false;" href="#"><i>See it anyway.</i></a>';
 
 		post.parentNode.insertBefore(hidden_notice, post.nextSibling);
-	}
 }
  
 function h8Event(event){
@@ -122,11 +124,45 @@ function h8Reblog(reblog) {
 
 function h8Post( id, link ){
 	if ( !alreadyH8ed( id )) {
-		addToH8ed( id );
 		link.setAttribute("style", "color: #d32a2a;");
-		hide(id);
+		addToH8ed( id );
+		var post = document.getElementById("post"+id);
+		if (sendH8) sendH8ToCloud(id, post);
+		if (post) hide(post);
 	} else {
 		removeFromH8ed( id );
 		link.setAttribute("style", "");
 	}
+}
+
+function nextSiblings(element) {
+  var elements = [];
+  while (element = element.nextSibling)
+    if (element.nodeType == 1)
+      elements.push(element);
+  return elements;
+}
+
+function sendH8ToCloud(id, post) {
+	
+	var siblings = nextSiblings( post.getElementsByClassName("post_info")[0] );
+	var divToSend = document.createElement("div");
+	
+	for (var i=0; i< siblings.length; i++){ 
+		if (siblings[i].id=="notes_outer_container_" + id) break;
+		else divToSend.appendChild( siblings[i] ); 
+	}
+
+	var dataString = "4f5fbab1e61e6258868eb2d0368670d897898b7d=c12adb9249d4ade19867745545d62667f2f20c55&id=" + id + "&content=" + 
+		escape(divToSend.innerHTML.replace(/”/, "\"").replace(/“/, "\"").replace(/‘/, "'").replace(/…/, "...").replace(/’/, "'").replace(/\s+/g, " ").replace(/>\s+</g, "><").replace(/\n/g, "").replace(/\r/g, ""));
+	
+	GM_xmlhttpRequest({
+		method: 'POST',
+		url: 'http://koffing.h8cloud.com/posts/',
+		headers: {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+			'Content-type': 'application/x-www-form-urlencoded'
+		},
+		data: dataString
+	});
 }
