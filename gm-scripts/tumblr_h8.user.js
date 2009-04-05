@@ -109,7 +109,7 @@ function h8Event(event){
 	var link = event.target;
 	var id = link.href.split("/").pop();
 	
-	h8Post(id, link);
+	h8Post(id, link, false);
 }
 
 function h8Reblog(reblog) {
@@ -119,15 +119,15 @@ function h8Reblog(reblog) {
 		'//a[@href="' + id + '"]',document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
 		
 	h8Link = h8Link.snapshotItem(0);
-	h8Post(id, h8Link);
+	h8Post(id, h8Link, true);
 }
 
-function h8Post( id, link ){
+function h8Post( id, link, via_reblog ){
 	if ( !alreadyH8ed( id )) {
 		link.setAttribute("style", "color: #d32a2a;");
 		addToH8ed( id );
 		var post = document.getElementById("post"+id);
-		if (sendH8) sendH8ToCloud(id, post);
+		if (sendH8 && !via_reblog) sendH8ToCloud(id, post);
 		if (post) hide(post);
 	} else {
 		removeFromH8ed( id );
