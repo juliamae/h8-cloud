@@ -134,8 +134,23 @@ function h8Post( id, link, via_reblog ){
 	}
 }
 
+function previousPostInfo(post){
+	var prev = post.previousSibling;
+	if (prev.nodeType == 1 && prev.tagName == "LI" && prev.className.indexOf("post") != -1){
+		var post_info = prev.getElementsByClassName("post_info")[0];
+		if (post_info == undefined) return previousPostInfo(prev);
+		else return post_info;
+	} else return previousPostInfo(prev);
+}
+
 function sendH8ToCloud(id, post) {
-	var tumblog = post.getElementsByClassName("post_info")[0].getElementsByTagName("a")[0].innerHTML;
+	var tumblog;
+	var post_info = post.getElementsByClassName("post_info")[0];
+	if (post_info == undefined){
+		tumblog = previousPostInfo(post).getElementsByTagName("a")[0].innerHTML;
+	} else {
+		tumblog = post_info.getElementsByTagName("a")[0].innerHTML;
+	}
 	var dataString = "4f5fbab1e61e6258868eb2d0368670d897898b7d=c12adb9249d4ade19867745545d62667f2f20c55&id=" + id + "&meta=" + tumblog;
 	
 	GM_xmlhttpRequest({
