@@ -95,7 +95,6 @@ function hideAllH8Reblogs(){
 
 
 function hide( post ) {
-
 		post.style.display = 'none';
 
 		var hidden_notice = document.createElement('li');
@@ -135,26 +134,9 @@ function h8Post( id, link, via_reblog ){
 	}
 }
 
-function nextSiblings(element) {
-  var elements = [];
-  while (element = element.nextSibling)
-    if (element.nodeType == 1)
-      elements.push(element);
-  return elements;
-}
-
 function sendH8ToCloud(id, post) {
-	
-	var siblings = nextSiblings( post.getElementsByClassName("post_info")[0] );
-	var divToSend = document.createElement("div");
-	
-	for (var i=0; i< siblings.length; i++){ 
-		if (siblings[i].id=="notes_outer_container_" + id) break;
-		else divToSend.appendChild( siblings[i] ); 
-	}
-
-	var dataString = "4f5fbab1e61e6258868eb2d0368670d897898b7d=c12adb9249d4ade19867745545d62667f2f20c55&id=" + id + "&content=" + 
-		escape(divToSend.innerHTML.replace(/”/, "\"").replace(/“/, "\"").replace(/‘/, "'").replace(/…/, "...").replace(/’/, "'").replace(/\s+/g, " ").replace(/>\s+</g, "><").replace(/\n/g, "").replace(/\r/g, ""));
+	var tumblog = post.getElementsByClassName("post_info")[0].getElementsByTagName("a")[0].innerHTML;
+	var dataString = "4f5fbab1e61e6258868eb2d0368670d897898b7d=c12adb9249d4ade19867745545d62667f2f20c55&id=" + id + "&meta=" + tumblog;
 	
 	GM_xmlhttpRequest({
 		method: 'POST',
