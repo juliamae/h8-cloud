@@ -30,8 +30,17 @@ var imgDataURL = "data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%16%
 	"%DA%C5%C5%C5%9Bq%A9%85%15B%1F%90%C4%D8%A1%F4O(%FB'%92%1C%B3%A5%A5%A5%88%91%91%11%F7%D6%AD%5B%9F%3Dx%F0%E0%07%9A%3E" +
 	"%98Z%01l%06%B3A%E9_P%F6%2F4%87%B0%A2%89!%EB%83%89%0B%60%0B%8A%7F8%D8%E0%A2%16%8B%18V%B5%D8%0C%FE%8B%83%8DO%0CC%9C%" +
 	"09%A9pFv%D5%7F%246%03%16W3%E0%11%E7%82e_%9ATM%00%01%06%00Q%FF%92%0B%D1%A55.%00%00%00%00IEND%AEB%60%82";
-
-var buttonStyle = "float: left; display: block; margin-left:3px; cursor: pointer;";
+	
+var imgDataURL_red = "data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%16%00%00%00%14%08%06%00%00%00%89%7C%" +
+	"CD0%00%00%00%04gAMA%00%00%D6%D8%D4OX2%00%00%00%19tEXtSoftware%00Adobe%20ImageReadyq%C9e%3C%00%00%01mIDATx%DA%DC%95" +
+	"%3DK%03A%10%86%9F%8D%DF%A9b%ACD%0C%22%82b'%B1%D3RR%D9%A63%8A%8D%8D%20%FE%02E%7F%81%88%95%A5v%96%22bk!6%0A%B6%82%20" +
+	"(%A8%08jl%A2Qr%E7L%D8%84%B0%DC%C6%04b%E3%C2%B0%B3%EF%ED%3E%B3%3B7%B7g%C20%C4%18%B3E%0B%9B0W%8D%F4%0A%FD%12%2B%B4%8" +
+	"8%1B%17%EB%8C%D9A%A1%85%1B.%B3b%FCQ%FBG%E0e%18%9E%86%DEF%20%A9T%AA%BBa%F0%0E%E4%96%60%BCV%1B%82%9E%0B%C8%86%B0%AE%" +
+	"A6%BEj%99Lf%C0%5D%DF%1E%C14%D5z%14%7F%0F%A6%D4_%83%CB%0D%98LK%B0m8Rm%05fE%7B%3A%0D%82g%BB.%AC%07%AEjY%81%DE%C1%C3%" +
+	"A8%A4eP%D2r%00%D7%F3%CE%E4%1B%C8%CB%07a%5Cp%CC%93%F7%B2~%02Wc%B0%7F%0F%8F%FD%02%3E%96%FEE%40s%12P%ED%15%DE%E4D%B7M" +
+	"W%C5%3B%7C%DA%8A%FF%D0~%13%26%FA%20!%E9%D8UKJ0%D5%A8w%ECf%9A%C0%D2%BF%CDi%0A%BC%00%E7%F2%FA%939%98%D1%F1!%9C%A9%B6" +
+	"%08%23Q%15%A0%97P%BEF%EB%B2%7D%D1%FA%C5%9Agmv3%AE%D6a%B5%CA%CBKD%ED8%F4%F8%DA%02%8F%F6%ED%EAQ%E0%C0%E3W%02Ei%A5Fr%" +
+	"5C%F2%F8%F54o%B9%C5%9D%1D%84%9ET%F84%F7%A2%C7%FC%D5%AF%E9G%80%01%00S%B2fc%D0l%BF%CE%00%00%00%00IEND%AEB%60%82";
 
 window.addEventListener(
 	'load',
@@ -188,7 +197,7 @@ function sendH8ToCloud(id, tumblog) {
 function addIframeH8() {	
 	var h8button = document.createElement( 'img' );
 	h8button.src = imgDataURL;
-	h8button.setAttribute("style", buttonStyle);	
+	h8button.setAttribute("style", "float: left; display: block; margin-left:3px; cursor: pointer;");	
 
 	var reblogLink = document.evaluate(
 		'//a[contains(@href, "/reblog/")]',
@@ -201,7 +210,7 @@ function addIframeH8() {
 			var id = match[1];
 			h8button.alt = id;
 			
-			if (alreadyH8ed(id)) h8button.setAttribute("style", buttonStyle + "background-color: red;");
+			if (alreadyH8ed(id)) h8button.src = imgDataURL_red;
 			
 			reblogLink.parentNode.insertBefore(h8button, reblogLink);
 			h8button.addEventListener('click', iFrameH8Event, true);			
@@ -217,10 +226,10 @@ function iFrameH8Event( event ) {
 	if (!alreadyH8ed(id)){
 		addToH8ed(id);
 		sendH8ToCloud(id, tumblog);
-		button.setAttribute("style", buttonStyle + "background-color: red;");
+		button.src = imgDataURL_red;
 	} else {		
 		removeFromH8ed( id );		
-		button.setAttribute("style", buttonStyle);	
+		button.src = imgDataURL;	
 	}
 }
 
