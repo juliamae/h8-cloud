@@ -5,8 +5,8 @@ scr_meta=<><![CDATA[
 // @description    Provides a link to let you "h8" a post (as opposed to "<3"). H8ed posts and their reblogs are hidden from you forever!
 // @include        http://www.tumblr.com/dashboard
 // @include        http://www.tumblr.com/dashboard/*
-// @version        0.5.0
-// @copyright      2k9, Julia West (http://h8cloud.com)
+// @version        0.5.1
+// @copyright      2k10, Julia West (http://h8cloud.com)
 // @license        (CC) Attribution-Share Alike 3.0 United States; http://creativecommons.org/licenses/by-sa/3.0/us/
 // ==/UserScript==
 ]]></>;
@@ -81,15 +81,17 @@ function addH8Links(){
 	    var thisLink	= heartLinks.snapshotItem(i);
 			var thisID		= thisLink.id.split("like_form_")[1];
 			
-			var h8Link = document.createElement('a');
-			h8Link.setAttribute("onclick", "return false;" );
-			h8Link.className = "h8";
-			h8Link.href = thisID;
-			h8Link.innerHTML = "h8";
-			if ( alreadyH8ed(thisID) ){ h8Link.setAttribute("style", "color: #d32a2a;")}
+			if (!thisID.match(/_radar/)){
+				var h8Link = document.createElement('a');
+				h8Link.setAttribute("onclick", "return false;" );
+				h8Link.className = "h8";
+				h8Link.href = thisID;
+				h8Link.innerHTML = "h8";
+				if ( alreadyH8ed(thisID) ){ h8Link.setAttribute("style", "color: #d32a2a;")}
 			
-			h8Link.addEventListener('click', h8Event, true);
-			thisLink.parentNode.insertBefore(h8Link, thisLink.nextSibling);
+				h8Link.addEventListener('click', h8Event, true);
+				thisLink.parentNode.insertBefore(h8Link, thisLink.nextSibling);
+			}
 	}	
 }
 
