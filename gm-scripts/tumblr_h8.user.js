@@ -11,11 +11,56 @@ scr_meta=<><![CDATA[
 // ==/UserScript==
 ]]></>;
 
+if( typeof(GM_xmlhttpRequest) == 'undefined' ) {
+  GM_xmlhttpRequest = function(obj) {
+    var request = new XMLHttpRequest();
+    request.onreadystatechange = function() { 
+      if(obj.onreadystatechange) { 
+        obj.onreadystatechange(request); 
+      } 
+      if(request.readyState == 4 && obj.onload) { 
+        obj.onload(request); 
+      }
+    }
+    
+    request.onerror = function() { 
+      if(obj.onerror) { 
+        obj.onerror(request); 
+      } 
+    }
+    
+    try { 
+      request.open(obj.method,obj.url,true); 
+    } catch(e) { 
+      if(obj.onerror) { 
+        obj.onerror({
+          readyState      : 4,
+          responseHeaders : '',
+          responseText    : '',
+          responseXML     : '',
+          status          : 403,
+          statusText      : 'Forbidden'
+        })
+      }
+      return
+    }
+    
+    if(obj.headers) { 
+      for(name in obj.headers) { 
+        request.setRequestHeader(name,obj.headers[name]); 
+      } 
+    }
+    
+    request.send(obj.data)
+    return request
+  } 
+}
+
 // Change this value to false if you do not want the posts you h8 to (anonymously) go to h8cloud.com
 var sendH8 = true;
 
-var h8ed	= GM_getValue("h8ed", "").split(",");
-if (h8ed == "") h8ed = [];
+var storedH8 = localStorage.getItem("h8ed");
+var h8ed	= storedH8 ? storedH8.split(",") : [];
 
 var onDashboard = document.location.toString().search(/dashboard\/iframe/) == -1;
 
@@ -55,7 +100,7 @@ window.addEventListener(
         'DOMNodeInserted', 
         function(eventObject) {
           post     = eventObject.target;
-          tumblrId = post.id.split("post_")[1];
+          tumblrId = post.getAttribute("id").split("post_")[1];
           if (alreadyH8ed(tumblrId)) 
             hide(post);
           if (post.className.split(" ").indexOf("is_reblog") != -1) 
@@ -71,7 +116,7 @@ window.addEventListener(
 function addToH8ed( id ) {
 	if ( !alreadyH8ed(id) ) {
 		h8ed.push(id);
-		GM_setValue("h8ed", h8ed.join(","));
+		localStorage.setItem("h8ed", h8ed.join(","));
 	}
 }
 
@@ -79,7 +124,7 @@ function removeFromH8ed( id ) {
 	var index = h8ed.indexOf( id );
 	if ( index != -1 ) {
 		h8ed.splice( index, 1 );
-		GM_setValue("h8ed", h8ed.join(","));
+		localStorage.setItem("h8ed", h8ed.join(","));
 	}
 }
 
@@ -95,7 +140,7 @@ function addH8Links(target){
   
 	for (var i = 0; i < heartLinks.snapshotLength; i++) {
 	    var thisLink	= heartLinks.snapshotItem(i);
-			var thisID		= thisLink.id.split("like_form_")[1];
+			var thisID		= thisLink.getAttribute("id").split("like_form_")[1];
 			
 			if (!thisID.match(/_radar/)){
 				var h8Link = document.createElement('a');
@@ -162,7 +207,7 @@ function h8Event(event){
 }
 
 function h8Reblog(reblog) {
-	var id			= reblog.id.split("post_")[1];
+	var id			= reblog.getAttribute("id").split("post_")[1];
 	var h8Link 	= document.evaluate(
 		'//a[@href="' + id + '"]',document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null ).snapshotItem(0);
 		
@@ -253,54 +298,3 @@ function iFrameH8Event( event ) {
 		button.src = imgDataURL;	
 	}
 }
-
-// Update Notifier Script
-CheckScriptForUpdate = {
-	// Config values, change these to match your script
-	id: '45673', // Script id on Userscripts.org
-	days: 1, // Days to wait between update checks
-	name: /\/\/\s*@name\s*(.*)\s*\n/i.exec(scr_meta)[1],
-	version: /\/\/\s*@version\s*(.*)\s*\n/i.exec(scr_meta)[1],
-	time: new Date().getTime() | 0,
-	call: function(response) {
-		GM_xmlhttpRequest({
-			method: 'GET',
-			url: 'https://userscripts.org/scripts/source/'+this.id+'.meta.js',
-			headers: {
-				'User-agent': window.navigator.userAgent,
-				'Accept': 'application/atom+xml,application/xml,text/xml',
-			},
-			onload: function(xpr) {CheckScriptForUpdate.compare(xpr,response);}
-		});
-	},
-	compare: function(xpr,response) {
-		this.xversion=/\/\/\s*@version\s*(.*)\s*\n/i.exec(xpr.responseText)[1];
-		this.xname=/\/\/\s*@name\s*(.*)\s*\n/i.exec(xpr.responseText)[1];
-		if ( (this.xversion != this.version) && (confirm('A new version of the '+this.xname+' user script is available. Do you want to update?')) ) {
-			GM_setValue('updated', this.time);
-			GM_openInTab('http://userscripts.org/scripts/source/'+this.id+'.user.js');
-		} else if ( (this.xversion) && (this.xversion != this.version) ) {
-			if(confirm('Do you want to turn off auto updating for this script?')) {
-				GM_setValue('updated', 'off');
-				GM_registerMenuCommand("Auto Update "+this.name, function(){GM_setValue('updated', new Date().getTime() | 0);CheckScriptForUpdate.call('return');});
-				alert('Automatic updates can be re-enabled for this script from the User Script Commands submenu.');
-			} else {
-				GM_setValue('updated', this.time);
-			}
-		} else {
-			if(response) alert('No updates available for '+this.name);
-			GM_setValue('updated', this.time);
-		}
-	},
-	check: function() {
-		if (GM_getValue('updated', 0) == 0) GM_setValue('updated', this.time);
-		if ( (GM_getValue('updated', 0) != 'off') && (+this.time > (+GM_getValue('updated', 0) + (1000*60*60*24*this.days))) ) {
-			this.call();
-		} else if (GM_getValue('updated', 0) == 'off') {
-			GM_registerMenuCommand("Enable "+this.name+" updates", function(){GM_setValue('updated', new Date().getTime() | 0);CheckScriptForUpdate.call(true);});
-		} else {
-			GM_registerMenuCommand("Check "+this.name+" for updates", function(){GM_setValue('updated', new Date().getTime() | 0);CheckScriptForUpdate.call(true);});
-		}
-	}
-};
-if (self.location == top.location && GM_xmlhttpRequest) CheckScriptForUpdate.check();
