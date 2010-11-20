@@ -5,7 +5,7 @@ scr_meta=<><![CDATA[
 // @description    Provides a link to let you "h8" a post (as opposed to "<3"). H8ed posts and their reblogs are hidden from you forever!
 // @include        http://www.tumblr.com/dashboard
 // @include        http://www.tumblr.com/dashboard/*
-// @version        0.5.1
+// @version        0.5.2
 // @copyright      2k10, Julia West (http://h8cloud.com)
 // @license        (CC) Attribution-Share Alike 3.0 United States; http://creativecommons.org/licenses/by-sa/3.0/us/
 // ==/UserScript==
@@ -49,6 +49,21 @@ window.addEventListener(
 			addH8Links();
 			hideAllH8ed();
 			hideAllH8Reblogs();
+			
+			// Support for endless scroll - Thnx Freevo
+      document.getElementById('posts').addEventListener(
+        'DOMNodeInserted', 
+        function(eventObject) {
+          post     = eventObject.target;
+          tumblrId = post.id.split("post_")[1];
+          if (alreadyH8ed(tumblrId)) 
+            hide(post);
+          if (post.className.split(" ").indexOf("is_reblog") != -1) 
+            maybeHideReblog(post);
+
+          addH8Links(post);
+        }, true
+      );
 		} else addIframeH8();
 	}, true
 );
@@ -72,11 +87,12 @@ function alreadyH8ed( id ) {
 	return (h8ed.indexOf( id ) != -1);
 }
 
-function addH8Links(){
+function addH8Links(target){
+  var contextNode = target ? target : document;
 	var heartLinks = document.evaluate(
-	    '//form[contains(@action,"/like/")]',
-	    document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-	
+	    './/form[contains(@action,"/like/")]',
+	    contextNode, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+  
 	for (var i = 0; i < heartLinks.snapshotLength; i++) {
 	    var thisLink	= heartLinks.snapshotItem(i);
 			var thisID		= thisLink.id.split("like_form_")[1];
@@ -97,7 +113,7 @@ function addH8Links(){
 
 function hideAllH8ed(){
 	for( var i=0; i <= h8ed.length; i++ ) {
-		var post = document.getElementById("post" + h8ed[i]);
+		var post = document.getElementById("post_" + h8ed[i]);
 		if (post) hide( post );
 	}
 }
@@ -108,20 +124,23 @@ function hideAllH8Reblogs(){
 		document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
 
 	for (var i = 0; i < reblogs.snapshotLength; i++) {
-		var reblog = reblogs.snapshotItem(i);
-		var post_info = reblog.getElementsByClassName("post_info")[0];
-		
-		var match = false;
-		for(j=0; j< h8ed.length; j ++) {
-			var id = h8ed[j];
-			if (post_info.innerHTML.match( new RegExp(id))){
-				match = true;
-				break;
-			}
-		}
-		
-		if (match) h8Reblog(reblog);
+		maybeHideReblog(reblogs.snapshotItem(i));
 	}
+}
+
+function maybeHideReblog(reblog){
+  var post_info = reblog.getElementsByClassName("post_info")[0];
+	
+	var match = false;
+	for(j=0; j< h8ed.length; j ++) {
+		var id = h8ed[j];
+		if (post_info.innerHTML.match( new RegExp(id))){
+			match = true;
+			break;
+		}
+	}
+	
+	if (match) h8Reblog(reblog);
 }
 
 function hide( post ) {
@@ -143,7 +162,7 @@ function h8Event(event){
 }
 
 function h8Reblog(reblog) {
-	var id			= reblog.id.split("post")[1];
+	var id			= reblog.id.split("post_")[1];
 	var h8Link 	= document.evaluate(
 		'//a[@href="' + id + '"]',document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null ).snapshotItem(0);
 		
@@ -154,7 +173,7 @@ function h8Post( id, link, via_reblog ){
 	if ( !alreadyH8ed( id )) {
 		link.setAttribute("style", "color: #d32a2a;");
 		addToH8ed( id );
-		var post = document.getElementById("post"+id);
+		var post = document.getElementById("post_"+id);
 		var tumblog = getTumblrName(post);
 		if (sendH8 && !via_reblog) sendH8ToCloud(id, tumblog);
 		if (post) hide(post);
